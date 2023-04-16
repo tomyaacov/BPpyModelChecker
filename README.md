@@ -5,28 +5,24 @@
 ## Installation and Usage
 
 1. Clone the project :
+    ```shell
+    git clone https://github.com/tomyaacov/BPpyModelChecker.git
+    ```
 
-```shell
-git clone https://github.com/tomyaacov/BPpyModelChecker.git
-```
-
-2. Create a virtual environment and activate it:
-
-```shell
-cd BPpyModelChecker
-python -m venv env 
-source env/bin/activate
-```
-
-3. Update pip and install all dependencies:
-
-```shell
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-4. Run the hot cold example liveness verification:
- 
-```shell
-python bp_model_checker.py
-```
+2. Set an anvironment to run the code. There are 2 options:
+    1. Using docker:
+        ```shell
+            docker pull tomyaacov/bppy-pynusmv:latest
+        ```
+    2. Using a virtual environment:
+        ```shell
+            cd BPpyModelChecker
+            python -m venv env 
+            source env/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt
+        ```
+3. Run the hot cold example liveness verification:
+    ```shell
+    python bp_model_checker.py
+    ```
