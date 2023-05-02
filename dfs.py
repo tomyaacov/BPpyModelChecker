@@ -1,5 +1,3 @@
-from bppy.model.event_selection.simple_event_selection_strategy import SimpleEventSelectionStrategy
-from bppy import BEvent
 import graphviz
 
 
@@ -49,7 +47,10 @@ class DFSBThread:
                 s = bt.send(e)
         if s is None:
             return {}
-        return s
+        return {k: DFSBThread.str_event(v) if k in ["request", "waitFor", "block"] else v for k, v in s.items() }
+
+    def compute_event_list(self):
+        pass
 
     def run(self):
         init_s = Node(tuple(), self.get_state(tuple()))
@@ -84,13 +85,93 @@ class DFSBThread:
         g.save(name)
         return g
 
+    @staticmethod
+    def str_event(e):
+        if isinstance(e, BEvent):
+            return {e.name}
+        elif isinstance(e, str):
+            return {e}
+        return set([ee.name for ee in e])
+
+class ProductNode:
+    def __init__(self, l):
+        self.l = l
+        self.transitions = {}
+
+    def __key(self):
+        return "_".join([str(x.data) for x in self.l])
+
+    def __hash__(self):
+        return hash(self.__key())
+
+    def __eq__(self, other):
+        return self.__key() == other.__key()
+
+class DFSBProgram:
+    def __init__(self, bthread_gens, ess, event_list):
+        self.bthread_gens = bthread_gens
+        self.ess = ess
+        self.event_list = event_list
+
+    def run(self):
+        bt_dfs = {}
+        for i in range(len(self.bthread_gens)):
+            dfs = DFSBThread(self.bthread_gens[i], self.ess, self.event_list)
+            bt_dfs[i] = dfs.run()
+            DFSBThread.save_graph(*bt_dfs[i], f"dfs{i}.dot")
+
+        init_s = ProductNode(tuple([v for _, (v, _) in bt_dfs.items()]))
+        visited = set()
+        stack = []
+        stack.append(init_s)
+
+        while len(stack):
+            s = stack.pop()
+            if s not in visited:
+                visited.add(s)
+
+            for e in set().union(*[si.data.get("request", {}) for si in s.l]):
+                new_s = ProductNode(tuple([si.transitions.get(e, None) for si in s.l]))
+                if any([x is None for x in new_s.l]):
+                    continue
+                new_s = ProductNode(tuple([[x for x in bt_dfs[i][1] if x == new_s.l[i]][0] for i in range(len(new_s.l))]))
+                s.transitions[e] = new_s
+                if new_s not in visited:
+                    stack.append(new_s)
+        return init_s, visited
+
+    @staticmethod
+    def save_graph(init, states, name):
+        g = graphviz.Digraph()
+        map = {}
+        for i, s in enumerate(states):
+            g.node(str(i), shape='doublecircle' if s == init else 'circle')
+            map[s] = str(i)
+        for s in states:
+            for e, s_new in s.transitions.items():
+                g.edge(map[s], map[s_new], label=e)
+        g.save(name)
+        return g
+
 
 if __name__ == "__main__":
-    from hot_cold import *
-    def gen():
-        return control()
-    event_list = ["Start", "HOT", "COLD", "IDLE"]
-    dfs = DFSBThread(gen, SimpleEventSelectionStrategy(), event_list)
+    # from hot_cold import *
+    # def gen():
+    #     return add_a()
+    # event_list = ["Start", "HOT", "COLD", "IDLE"]
+    # dfs = DFSBThread(gen, SimpleEventSelectionStrategy(), event_list)
+    # init_s, visited = dfs.run()
+    # DFSBThread.save_graph(init_s, visited, "dfs.dot")
+    # from hot_cold import *
+    # event_list = ["Start", "HOT", "B", "IDLE"]
+    # dfs = DFSBProgram([lambda: add_a(), lambda: add_b("B"), lambda: control()], SimpleEventSelectionStrategy(), event_list)
+    # init_s, visited = dfs.run()
+    # DFSBProgram.save_graph(init_s, visited, "dfs.dot")
+    from examples.dining_philosophers import *
+    event_list = [x.name for x in all_events]
+    dfs = DFSBProgram([lambda: philosopher(0), lambda: philosopher(1), lambda: fork(0), lambda: fork(1)],
+                      SimpleEventSelectionStrategy(),
+                      event_list)
     init_s, visited = dfs.run()
-    DFSBThread.save_graph(init_s, visited, "dfs.dot")
+    DFSBProgram.save_graph(init_s, visited, "dfs.dot")
 

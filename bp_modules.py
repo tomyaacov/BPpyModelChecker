@@ -5,14 +5,13 @@ from copy import copy as copy_obj
 from itertools import chain, combinations
 from dfs import DFSBThread
 
-
 def powerset(iterable):
     xs = list(iterable)
     return chain.from_iterable(combinations(xs,n) for n in range(1, len(xs)+1))
 
 
-def bthread_to_module(bthread, bthread_name, event_list):
-    dfs = DFSBThread(lambda: bthread(), SimpleEventSelectionStrategy(), event_list)
+def bthread_to_module(bthread_generator, bthread_name, event_list):
+    dfs = DFSBThread(bthread_generator, SimpleEventSelectionStrategy(), event_list)
     init_s, visited = dfs.run()
     visited = dict([(k, v) for k, v in enumerate(visited)])
     id_to_change = [k for k, v in visited.items() if v == init_s][0]
@@ -36,12 +35,13 @@ def bthread_to_module(bthread, bthread_name, event_list):
     bt1_mod_dict["INIT"] = [bt1_mod_dict["state"] == 0]
     bt1_mod_dict_assign = {}
     for e in event_list:
-        case_list = tuple([(bt1_mod_dict["state"] == i, Trueexp()) if e == node.data.get(request,
-                                                                                         BEvent("")).name else (
-        bt1_mod_dict["state"] == i, Falseexp()) for i, node in visited.items()])
+        case_list = tuple([(bt1_mod_dict["state"] == i, Trueexp())
+                           if e in node.data.get(request, {})
+                           else (bt1_mod_dict["state"] == i, Falseexp()) for i, node in visited.items()])
         bt1_mod_dict_assign[e + "_requested"] = Case(case_list + ((Trueexp(), Falseexp()),))
-        case_list = tuple([(bt1_mod_dict["state"] == i, Trueexp()) if e == node.data.get(block, BEvent("")).name else (
-        bt1_mod_dict["state"] == i, Falseexp()) for i, node in visited.items()])
+        case_list = tuple([(bt1_mod_dict["state"] == i, Trueexp())
+                           if e in node.data.get(block, {})
+                           else (bt1_mod_dict["state"] == i, Falseexp()) for i, node in visited.items()])
         bt1_mod_dict_assign[e + "_blocked"] = Case(case_list + ((Trueexp(), Falseexp()),))
 
     case_list = []
@@ -108,7 +108,7 @@ def main_module(event_list, bt_list):
     return type("main", (Module,), mod_dict)
 
 if __name__ == "__main__":
-    from hot_cold import *
+    from examples.hot_cold import add_a, add_b, control
     event_list = ["Start", "HOT", "COLD", "IDLE"]
     # bt_list = [
     #     bthread_to_module(add_a(), "adda", event_list),

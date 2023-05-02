@@ -2,8 +2,9 @@ import pynusmv
 pynusmv.init.init_nusmv()
 # pynusmv.glob.load_from_file("hot_cold2.smv")
 from bp_modules import *
-from hot_cold import *
+from examples.hot_cold import *
 event_list = ["Start", "HOT", "COLD", "IDLE"]
+
 bt_list = [
     bthread_to_module(add_a, "adda", event_list),
     bthread_to_module(add_b, "addb", event_list),
