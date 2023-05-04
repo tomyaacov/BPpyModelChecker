@@ -12,7 +12,9 @@ def powerset(iterable):
 
 def bthread_to_module(bthread_generator, bthread_name, event_list):
     dfs = DFSBThread(bthread_generator, SimpleEventSelectionStrategy(), event_list)
-    init_s, visited = dfs.run()
+    init_s, visited, requested, blocked = dfs.run()
+    # requested = event_list
+    # blocked = event_list
     visited = dict([(k, v) for k, v in enumerate(visited)])
     id_to_change = [k for k, v in visited.items() if v == init_s][0]
     s_to_change = visited[0]
@@ -26,19 +28,20 @@ def bthread_to_module(bthread_generator, bthread_name, event_list):
     bt1_mod_dict["state"] = Var(Range(0, len(visited)))
 
     bt1_mod_dict.update({
-        e + "_requested": Var(Boolean(), name=e + "_requested") for e in event_list
+        e + "_requested": Var(Boolean(), name=e + "_requested") for e in requested
     })
     bt1_mod_dict.update({
-        e + "_blocked": Var(Boolean(), name=e + "_blocked") for e in event_list
+        e + "_blocked": Var(Boolean(), name=e + "_blocked") for e in blocked
     })
     bt1_mod_dict["must_finish"] = Var(Boolean())
     bt1_mod_dict["INIT"] = [bt1_mod_dict["state"] == 0]
     bt1_mod_dict_assign = {}
-    for e in event_list:
+    for e in requested:
         case_list = tuple([(bt1_mod_dict["state"] == i, Trueexp())
                            if e in node.data.get(request, {})
                            else (bt1_mod_dict["state"] == i, Falseexp()) for i, node in visited.items()])
         bt1_mod_dict_assign[e + "_requested"] = Case(case_list + ((Trueexp(), Falseexp()),))
+    for e in blocked:
         case_list = tuple([(bt1_mod_dict["state"] == i, Trueexp())
                            if e in node.data.get(block, {})
                            else (bt1_mod_dict["state"] == i, Falseexp()) for i, node in visited.items()])
@@ -84,9 +87,15 @@ def main_module(event_list, bt_list):
     for e in event_list:
         mod_dict_define[e + "_requested"] = Falseexp()
         mod_dict_define[e + "_blocked"] = Falseexp()
+    all_requested = set()
+    all_blocked = set()
     for i in range(len(bt_list)):
         for v in mod_dict["bt"+str(i)].type.VAR:
             if v.name in mod_dict_define:
+                if v.name.endswith("_requested"):
+                    all_requested.add(v.name)
+                elif v.name.endswith("_blocked"):
+                    all_blocked.add(v.name)
                 mod_dict_define[v.name] = Or("bt"+str(i) + "." + v.name, mod_dict_define[v.name])
     mod_dict_define["must_finish"] = Falseexp()
     for i in range(len(bt_list)):
@@ -94,13 +103,26 @@ def main_module(event_list, bt_list):
     mod_dict["DEFINE"] = mod_dict_define
     mod_dict_assign = {}
     case_list = [(mod_dict["event"] == "DONE", "DONE")]
-    for subset in powerset(event_list):
+    for subset in powerset([x for x in event_list if x + "_requested" in all_requested]):
         statement = Trueexp()
         for e in event_list:
             if e in subset:
-                statement = And(And(statement, e + "_requested"), "!" + e + "_blocked")
+                if e + "_blocked" in all_blocked:
+                    statement = And(And(statement, e + "_requested"), "!" + e + "_blocked")
+                else:
+                    statement = And(statement, e + "_requested")
             else:
-                statement = And(statement, Or("!" + e + "_requested", e + "_blocked"))
+                if e + "_blocked" in all_blocked:
+                    if e + "_requested" in all_requested:
+                        statement = And(statement, Or("!" + e + "_requested", e + "_blocked"))
+                    else:
+                        pass
+                else:
+                    if e + "_requested" in all_requested:
+                        statement = And(statement, "!" + e + "_requested")
+                    else:
+                        pass
+
         case_list.append((statement, "{" + ",".join(subset) + "}"))
     case_list.append((Trueexp(), "DONE"))
     mod_dict_assign["next(event)"] = Case(tuple(case_list))

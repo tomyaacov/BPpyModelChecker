@@ -22,7 +22,16 @@
             pip install --upgrade pip
             pip install -r requirements.txt
         ```
-3. Run the hot cold example liveness verification:
+3. Run examples:
     ```shell
-    python bp_model_checker.py
+    python main.py hot_cold1 3 1
+    ```
+   ```shell
+    python main.py hot_cold2 3 1
+    ```
+   ```shell
+    python main.py dining_philosophers1 2
+    ```
+   ```shell
+    python main.py dining_philosophers2 2
     ```

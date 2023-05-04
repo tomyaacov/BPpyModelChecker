@@ -1,5 +1,5 @@
 import graphviz
-
+from bppy import BEvent, SimpleEventSelectionStrategy
 
 class Node:
     def __init__(self, prefix, data):
@@ -44,7 +44,7 @@ class DFSBThread:
                     if BEvent(e) in s.get('block'):
                         return None
             if self.ess.is_satisfied(BEvent(e), s):
-                s = bt.send(e)
+                s = bt.send(BEvent(e))
         if s is None:
             return {}
         return {k: DFSBThread.str_event(v) if k in ["request", "waitFor", "block"] else v for k, v in s.items() }
@@ -55,6 +55,8 @@ class DFSBThread:
     def run(self):
         init_s = Node(tuple(), self.get_state(tuple()))
         visited = set()
+        requested = set()
+        blocked = set()
         stack = []
         stack.append(init_s)
 
@@ -62,6 +64,10 @@ class DFSBThread:
             s = stack.pop()
             if s not in visited:
                 visited.add(s)
+            if "request" in s.data:
+                requested.update(s.data["request"])
+            if "block" in s.data:
+                blocked.update(s.data["block"])
 
             for e in self.event_list:
                 new_s = Node(s.prefix + (e,), self.get_state(s.prefix + (e,)))
@@ -70,7 +76,7 @@ class DFSBThread:
                 s.transitions[e] = new_s
                 if new_s not in visited:
                     stack.append(new_s)
-        return init_s, visited
+        return init_s, visited, requested, blocked
 
     @staticmethod
     def save_graph(init, states, name):
@@ -118,9 +124,9 @@ class DFSBProgram:
         for i in range(len(self.bthread_gens)):
             dfs = DFSBThread(self.bthread_gens[i], self.ess, self.event_list)
             bt_dfs[i] = dfs.run()
-            DFSBThread.save_graph(*bt_dfs[i], f"dfs{i}.dot")
+            DFSBThread.save_graph(*bt_dfs[i][:2], f"output/dfs{i}.dot")
 
-        init_s = ProductNode(tuple([v for _, (v, _) in bt_dfs.items()]))
+        init_s = ProductNode(tuple([v[0] for _, v in bt_dfs.items()]))
         visited = set()
         stack = []
         stack.append(init_s)
@@ -155,23 +161,32 @@ class DFSBProgram:
 
 
 if __name__ == "__main__":
-    # from hot_cold import *
-    # def gen():
-    #     return add_a()
-    # event_list = ["Start", "HOT", "COLD", "IDLE"]
-    # dfs = DFSBThread(gen, SimpleEventSelectionStrategy(), event_list)
-    # init_s, visited = dfs.run()
-    # DFSBThread.save_graph(init_s, visited, "dfs.dot")
-    # from hot_cold import *
-    # event_list = ["Start", "HOT", "B", "IDLE"]
-    # dfs = DFSBProgram([lambda: add_a(), lambda: add_b("B"), lambda: control()], SimpleEventSelectionStrategy(), event_list)
-    # init_s, visited = dfs.run()
-    # DFSBProgram.save_graph(init_s, visited, "dfs.dot")
     from examples.dining_philosophers import *
-    event_list = [x.name for x in all_events]
-    dfs = DFSBProgram([lambda: philosopher(0), lambda: philosopher(1), lambda: fork(0), lambda: fork(1)],
+    N = 3
+    set_dp_bprogram(3)
+    all_events = [BEvent(f"T{i}R") for i in range(N)] + \
+                 [BEvent(f"T{i}L") for i in range(N)] + \
+                 [BEvent(f"P{i}R") for i in range(N)] + \
+                 [BEvent(f"P{i}L") for i in range(N)] + \
+                 [BEvent(f"TS{i}") for i in range(N)] + \
+                 [BEvent(f"RS{i}") for i in range(N)]
+    dfs = DFSBProgram(list(map((lambda n: lambda: philosopher(n)), range(N))) +
+                      list(map((lambda n: lambda: fork(n)), range(N))) +
+                      [lambda: fork_eventually_released(0)], #+
+                      # [lambda: semaphore()] +
+                      # list(map((lambda n: lambda: take_semaphore(n)), range(N))),
                       SimpleEventSelectionStrategy(),
-                      event_list)
+                      [x.name for x in all_events])
     init_s, visited = dfs.run()
-    DFSBProgram.save_graph(init_s, visited, "dfs.dot")
+    DFSBProgram.save_graph(init_s, visited, "output/dfs.dot")
+    # from examples.hot_cold import *
+    # N = 2
+    # M = 2
+    # set_bprogram(N, M)
+    # event_list = ["Start", "HOT", "IDLE"] + ["COLD" + str(i) for i in range(M)]
+    # dfs = DFSBProgram([lambda: add_a(), lambda: add_b("COLD0"), lambda: add_b("COLD1"), lambda: control2()],
+    #                   SimpleEventSelectionStrategy(),
+    #                   event_list)
+    # init_s, visited = dfs.run()
+    # DFSBProgram.save_graph(init_s, visited, "output/dfs.dot")
 
