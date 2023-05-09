@@ -1,35 +1,50 @@
 from bppy import BEvent, b_thread, waitFor, request, block, BProgram, PrintBProgramRunnerListener, SimpleEventSelectionStrategy
+data = "data"
 
-R=3
-C=3
-LINES = [[(i, j) for j in range(C)] for i in range(R)] + [[(i, j) for i in range(R)] for j in range(C)] + [[(i, i) for i in range(R)]] + [[(i, R - i - 1) for i in range(R)]]
+def set_ttt_bprogram(n, m):
+    global R, C, LINES, any_x, any_o, move_events, all_events, x_lines, o_lines, static_event
+    R = n
+    C = m
+    static_event = {
+        'OWin': BEvent('OWin'),
+        'XWin': BEvent('XWin'),
+        'draw': BEvent('Draw')
+    }
+    LINES = [[(i, j) for j in range(C)] for i in range(R)] + [[(i, j) for i in range(R)] for j in range(C)] + [
+        [(i, i) for i in range(R)]] + [[(i, R - i - 1) for i in range(R)]]
+    any_x = [x(i, j) for i in range(R) for j in range(C)]
+    any_o = [o(i, j) for i in range(R) for j in range(C)]
+    move_events = any_x + any_o
+    all_events = move_events + list(static_event.values())
+    x_lines = [[x(i, j) for (i, j) in line] for line in LINES]
+    o_lines = [[o(i, j) for (i, j) in line] for line in LINES]
 
 
 def x(row, col):
-    return BEvent('X(' + str(row) + ',' + str(col) + ')')
+    return BEvent('X' + str(row) + str(col))
 
 
 def o(row, col):
-    return BEvent('O(' + str(row) + ',' + str(col) + ')')
+    return BEvent('O' + str(row) + str(col))
 
 
-static_event = {
-    'OWin': BEvent('OWin'),
-    'XWin': BEvent('XWin'),
-    'draw': BEvent('Draw')
-}
 
-any_x = [x(i, j) for i in range(R) for j in range(C)]
-any_o = [o(i, j) for i in range(R) for j in range(C)]
-move_events = any_x + any_o
-all_events = move_events + list(static_event.values())
-x_lines = [[x(i, j) for (i, j) in line] for line in LINES]
-o_lines = [[o(i, j) for (i, j) in line] for line in LINES]
 
 @b_thread
 def square_taken(row, col):
     yield {waitFor: [x(row, col), o(row, col)]}
     yield {block: [x(row, col), o(row, col)]}
+
+@b_thread
+def fault_square_taken(row, col):
+    if row == 2 and col == 2:
+        good = False
+        yield {waitFor: [x(row, col), o(row, col)], data: locals()}
+        yield {block: [x(row, col)], data: locals()}
+    else:
+        good = True
+        yield {waitFor: [x(row, col), o(row, col)], data: locals()}
+        yield {block: [x(row, col), o(row, col)], data: locals()}
 
 
 @b_thread
@@ -49,21 +64,21 @@ def end_of_game():
 def detect_draw():
     for r in range(R):
         for c in range(C):
-            yield {waitFor: move_events}
+            yield {waitFor: move_events, data: locals()}
     yield {request: static_event['draw'], block: move_events}
 
 
 @b_thread
 def detect_x_win(line):
     for i in range(R):
-        yield {waitFor: line}
+        yield {waitFor: line, data: locals()}
     yield {request: static_event['XWin'], block: [e for e in all_events if e != static_event['XWin']]}
 
 
 @b_thread
 def detect_o_win(line):
     for i in range(R):
-        yield {waitFor: line}
+        yield {waitFor: line, data: locals()}
     yield {request: static_event['OWin'], block: [e for e in all_events if e != static_event['OWin']]}
 
 # player O strategies:
@@ -132,6 +147,7 @@ def player_x():
 
 
 if __name__ == "__main__":
+    set_ttt_bprogram(4,4)
     bprog = BProgram(
         bthreads=[square_taken(i, j) for i in range(R) for j in range(C)]
                  + [enforce_turns(), end_of_game(), detect_draw()]

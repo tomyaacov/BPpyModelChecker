@@ -1,7 +1,9 @@
 from bp_model_check import ModelChecker
 from examples.dining_philosophers import *
 from examples.hot_cold import *
+from examples.ttt import *
 import sys
+from itertools import product
 
 def main(args):
     example = args[0]
@@ -59,6 +61,53 @@ def main(args):
                           ["s"] +
                           ["ts" + str(i) for i in range(N)])
         spec = "AG (!(event = DONE))"
+    elif example == "ttt1":
+        R = int(args[1])
+        C = int(args[2])
+        set_ttt_bprogram(R, C)
+        any_x = [x(i, j) for i in range(R) for j in range(C)]
+        any_o = [o(i, j) for i in range(R) for j in range(C)]
+        move_events = any_x + any_o
+        all_events = move_events + [BEvent('OWin'), BEvent('XWin'), BEvent('Draw')]
+        LINES = [[(i, j) for j in range(C)] for i in range(R)] + [[(i, j) for i in range(R)] for j in range(C)] + [
+            [(i, i) for i in range(R)]] + [[(i, R - i - 1) for i in range(R)]]
+        x_lines = [[x(i, j) for (i, j) in line] for line in LINES]
+        o_lines = [[o(i, j) for (i, j) in line] for line in LINES]
+        mc = ModelChecker([x.name for x in all_events],
+                          list(map((lambda arg: lambda: fault_square_taken(*arg)), product(range(R), range(C)))) +
+                          [lambda: enforce_turns(), lambda: end_of_game(), lambda: detect_draw(), lambda: player_o(), lambda: player_x()] +
+                          list(map((lambda line: lambda: detect_x_win(line)), x_lines)) +
+                          list(map((lambda line: lambda: detect_x_win(line)), o_lines)),
+                            ["st" + str(i) + str(j) for i in range(R) for j in range(C)] +
+                            ["enforce_turns", "end_of_game", "detect_draw", "player_o", "player_x"] +
+                            ["xwin" + str(i) for i in range(len(x_lines))] +
+                            ["owin" + str(i) for i in range(len(o_lines))]
+                            )
+        spec = "AG (!(event = DONE))"
+    elif example == "ttt1":
+        R = int(args[1])
+        C = int(args[2])
+        set_ttt_bprogram(R, C)
+        any_x = [x(i, j) for i in range(R) for j in range(C)]
+        any_o = [o(i, j) for i in range(R) for j in range(C)]
+        move_events = any_x + any_o
+        all_events = move_events + [BEvent('OWin'), BEvent('XWin'), BEvent('Draw')]
+        LINES = [[(i, j) for j in range(C)] for i in range(R)] + [[(i, j) for i in range(R)] for j in range(C)] + [
+            [(i, i) for i in range(R)]] + [[(i, R - i - 1) for i in range(R)]]
+        x_lines = [[x(i, j) for (i, j) in line] for line in LINES]
+        o_lines = [[o(i, j) for (i, j) in line] for line in LINES]
+        mc = ModelChecker([x.name for x in all_events],
+                          list(map((lambda arg: lambda: square_taken(*arg)), product(range(R), range(C)))) +
+                          [lambda: enforce_turns(), lambda: end_of_game(), lambda: detect_draw(), lambda: player_o(), lambda: player_x()] +
+                          list(map((lambda line: lambda: detect_x_win(line)), x_lines)) +
+                          list(map((lambda line: lambda: detect_x_win(line)), o_lines)),
+                            ["st" + str(i) + str(j) for i in range(R) for j in range(C)] +
+                            ["enforce_turns", "end_of_game", "detect_draw", "player_o", "player_x"] +
+                            ["xwin" + str(i) for i in range(len(x_lines))] +
+                            ["owin" + str(i) for i in range(len(o_lines))]
+                            )
+        spec = "AG (!(event = DONE))"
+
 
     # spec = prop.ag(prop.af(prop.atom(("bt0.must_finish = FALSE"))))
     print("number of events:", len(mc.event_list))
@@ -70,30 +119,31 @@ def main(args):
 
 
 if __name__ == "__main__":
-    if True:#len(sys.argv) >= 2:
-        #main(sys.argv[1:])
-        main("dining_philosophers2 3".split())
-        #main("hot_cold2 90 3".split())
+    if len(sys.argv) < 2:
+        #main("dining_philosophers1 4".split())
+        #main("hot_cold2 3 1".split())
+        main("ttt1 3 3".split())
     else:
-        for i in [10, 20, 30]:
-            for j in range(1, 4):
-                print("-"*80)
-                print("Example:", "hot_cold1", i, j)
-                args = ["hot_cold1", i, j]
-                main(args)
-                print("-" * 80)
-                print("Example:", "hot_cold2", i, j)
-                args = ["hot_cold2", i, j]
-                main(args)
-        for i in [2, 3]:
-            print("-" * 80)
-            print("Example:", "dining_philosophers1", i)
-            args = ["dining_philosophers1", i]
-            main(args)
-            print("-" * 80)
-            print("Example:", "dining_philosophers2", i)
-            args = ["dining_philosophers2", i]
-            main(args)
+        main(sys.argv[1:])
+        # for i in [10, 20, 30]:
+        #     for j in range(1, 4):
+        #         print("-"*80)
+        #         print("Example:", "hot_cold1", i, j)
+        #         args = ["hot_cold1", i, j]
+        #         main(args)
+        #         print("-" * 80)
+        #         print("Example:", "hot_cold2", i, j)
+        #         args = ["hot_cold2", i, j]
+        #         main(args)
+        # for i in [2, 3]:
+        #     print("-" * 80)
+        #     print("Example:", "dining_philosophers1", i)
+        #     args = ["dining_philosophers1", i]
+        #     main(args)
+        #     print("-" * 80)
+        #     print("Example:", "dining_philosophers2", i)
+        #     args = ["dining_philosophers2", i]
+        #     main(args)
 
 
 

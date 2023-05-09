@@ -77,7 +77,7 @@ def bthread_to_module(bthread_generator, bthread_name, event_list):
 
 def main_module(event_list, bt_list):
     mod_dict = {}
-    mod_dict["event"] = Var(Scalar(tuple(["START", "DONE", "Dummy"] + event_list)))
+    mod_dict["event"] = Var(Scalar(tuple(["START", "DONE"] + event_list)))
     bt_modules = []
     for i, bt in enumerate(bt_list):
         mod_dict["bt"+str(i)] = Var(bt(mod_dict["event"]))
@@ -100,45 +100,58 @@ def main_module(event_list, bt_list):
     mod_dict_define["must_finish"] = Falseexp()
     for i in range(len(bt_list)):
         mod_dict_define["must_finish"] = Or("bt"+str(i) + ".must_finish", mod_dict_define["must_finish"])
+    for e in event_list:
+        mod_dict_define[e + "_enabled"] = And(e + "_requested", "!" + e + "_blocked")
     mod_dict["DEFINE"] = mod_dict_define
-    mod_dict_assign = {}
-    case_list = [(mod_dict["event"] == "DONE", "DONE")]
-    for subset in powerset([x for x in event_list if x + "_requested" in all_requested]):
-        statement = Trueexp()
-        for e in event_list:
-            if e in subset:
-                if e + "_blocked" in all_blocked:
-                    statement = And(And(statement, e + "_requested"), "!" + e + "_blocked")
-                else:
-                    statement = And(statement, e + "_requested")
-            else:
-                if e + "_blocked" in all_blocked:
-                    if e + "_requested" in all_requested:
-                        statement = And(statement, Or("!" + e + "_requested", e + "_blocked"))
-                    else:
-                        pass
-                else:
-                    if e + "_requested" in all_requested:
-                        statement = And(statement, "!" + e + "_requested")
-                    else:
-                        pass
-
-        case_list.append((statement, "{" + ",".join(subset) + "}"))
-    case_list.append((Trueexp(), "DONE"))
-    mod_dict_assign["next(event)"] = Case(tuple(case_list))
-    mod_dict["ASSIGN"] = mod_dict_assign
+    trans_statement = NotEqual("next(event)", "START")
+    any_enabled = Falseexp()
+    for e in event_list:
+        trans_statement = And(trans_statement, Implies("!" + e + "_enabled", NotEqual("next(event)", e)))
+        any_enabled = Or(any_enabled, e + "_enabled")
+    trans_statement = And(trans_statement, Implies(any_enabled, NotEqual("next(event)", "DONE")))
+    trans_statement = And(trans_statement, Implies(Equal("event", "DONE"), Equal("next(event)", "DONE")))
+    mod_dict["TRANS"] = [trans_statement]
+    # mod_dict_assign = {}
+    # case_list = [(mod_dict["event"] == "DONE", "DONE")]
+    # for subset in powerset([x for x in event_list if x + "_requested" in all_requested]):
+    #     statement = Trueexp()
+    #     for e in event_list:
+    #         if e in subset:
+    #             if e + "_blocked" in all_blocked:
+    #                 statement = And(And(statement, e + "_requested"), "!" + e + "_blocked")
+    #             else:
+    #                 statement = And(statement, e + "_requested")
+    #         else:
+    #             if e + "_blocked" in all_blocked:
+    #                 if e + "_requested" in all_requested:
+    #                     statement = And(statement, Or("!" + e + "_requested", e + "_blocked"))
+    #                 else:
+    #                     pass
+    #             else:
+    #                 if e + "_requested" in all_requested:
+    #                     statement = And(statement, "!" + e + "_requested")
+    #                 else:
+    #                     pass
+    #
+    #     case_list.append((statement, "{" + ",".join(subset) + "}"))
+    # case_list.append((Trueexp(), "DONE"))
+    # mod_dict_assign["next(event)"] = Case(tuple(case_list))
+    # mod_dict["ASSIGN"] = mod_dict_assign
     return type("main", (Module,), mod_dict)
 
 if __name__ == "__main__":
-    from examples.hot_cold import add_a, add_b, control
-    event_list = ["Start", "HOT", "COLD", "IDLE"]
-    # bt_list = [
-    #     bthread_to_module(add_a(), "adda", event_list),
-    #     bthread_to_module(add_b(), "addb", event_list),
-    #     bthread_to_module(control(), "control", event_list),
-    # ]
-    #print(main_module(event_list, bt_list))
-    print(bthread_to_module(control, "control", event_list))
+    from examples.hot_cold import add_a, add_b, control, set_bprogram
+    event_list = ["Start", "HOT", "COLD0"]
+    N = 3
+    M = 1
+    set_bprogram(N, M)
+    bt_list = [
+        bthread_to_module(lambda: add_a(), "adda", event_list),
+        bthread_to_module(lambda: add_b("COLD0"), "addb", event_list),
+        bthread_to_module(lambda: control(), "control", event_list),
+    ]
+    main = main_module(event_list, bt_list)
+    print(main)
 
     # bt = bthread_to_module(add_a(), "add_a", event_list)
     # v = Var(bt(Var(Scalar(tuple(["START", "DONE"] + event_list)))))
