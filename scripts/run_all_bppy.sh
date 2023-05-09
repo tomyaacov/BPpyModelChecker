@@ -15,7 +15,20 @@ module load anaconda ### load anaconda module
 source activate bppy_model_checking ### activating Conda environment. Environment must be configured before running the job
 cd ~/repos/BPpyModelChecker/ || exit
 
-options=( "hot_cold1 3 1" "hot_cold2 3 1" "dining_philosophers1 2" "dining_philosophers2 2" )
+options=(
+"hot_cold1 30 1" "hot_cold1 60 1" "hot_cold1 90 1"
+"hot_cold1 30 2" "hot_cold1 60 2" "hot_cold1 90 2"
+"hot_cold1 30 3" "hot_cold1 60 3" "hot_cold1 90 3"
+"hot_cold2 30 1" "hot_cold2 60 1" "hot_cold2 90 1"
+"hot_cold2 30 2" "hot_cold2 60 2" "hot_cold2 90 2"
+"hot_cold2 30 3" "hot_cold2 60 3" "hot_cold2 90 3"
+
+"dining_philosophers1 2" "dining_philosophers1 3" "dining_philosophers1 4" "dining_philosophers1 5"
+"dining_philosophers2 2" "dining_philosophers2 3" "dining_philosophers2 4" "dining_philosophers2 5"
+
+"ttt1 3 3" "ttt1 4 4" "ttt1 5 5"
+"ttt2 3 3" "ttt2 4 4" "ttt2 5 5"
+)
 for option in "${options[@]}"; do
   echo "$file"
   timeout 30m /usr/bin/time -v python main.py $option
