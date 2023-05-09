@@ -30,6 +30,6 @@ options=(
 "ttt2 3 3" "ttt2 4 4" "ttt2 5 5"
 )
 for option in "${options[@]}"; do
-  echo "$file"
+  echo "$option"
   timeout 30m /usr/bin/time -v python main.py $option
 done
