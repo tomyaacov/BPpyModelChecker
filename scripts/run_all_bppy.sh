@@ -14,7 +14,7 @@
 module load anaconda ### load anaconda module
 source activate bppy_model_checking ### activating Conda environment. Environment must be configured before running the job
 cd ~/repos/BPpyModelChecker/ || exit
-
+#option = ()
 options=(
 "hot_cold1 30 1" "hot_cold1 60 1" "hot_cold1 90 1"
 "hot_cold1 30 2" "hot_cold1 60 2" "hot_cold1 90 2"

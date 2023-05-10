@@ -84,7 +84,7 @@ def main(args):
                             ["owin" + str(i) for i in range(len(o_lines))]
                             )
         spec = "AG (!(event = DONE))"
-    elif example == "ttt1":
+    elif example == "ttt2":
         R = int(args[1])
         C = int(args[2])
         set_ttt_bprogram(R, C)
