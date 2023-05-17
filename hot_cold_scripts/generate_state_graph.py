@@ -4,37 +4,37 @@ pynusmv.init.init_nusmv()
 from bp_modules import *
 from examples.hot_cold import *
 event_list = ["Start", "HOT", "COLD0"]
-N = 3
-M = 1
-set_bprogram(N, M)
-bt_list = [
-    bthread_to_module(lambda: add_a(), "adda", event_list),
-    bthread_to_module(lambda: add_b("COLD0"), "addb", event_list),
-    bthread_to_module(lambda: control(), "control", event_list),
-]
-main = main_module(event_list, bt_list)
-print(bt_list[0])
-print(bt_list[1])
-print(bt_list[2])
-print(main)
+# N = 3
+# M = 1
+# set_bprogram(N, M)
+# bt_list = [
+#     bthread_to_module(lambda: add_a(), "adda", event_list),
+#     bthread_to_module(lambda: add_b("COLD0"), "addb", event_list),
+#     bthread_to_module(lambda: control(), "control", event_list),
+# ]
+# main = main_module(event_list, bt_list)
+# print(bt_list[0])
+# print(bt_list[1])
+# print(bt_list[2])
+# print(main)
 
-# with open("output/bp_model.smv", "w") as f:
+# with open("output/bp_model_new.smv", "w") as f:
 #     for bt in bt_list:
 #         f.write(str(bt))
 #         f.write("\n")
 #     f.write(str(main))
 #     f.write("\n")
-# pynusmv.glob.load_from_file("output/bp_model_new.smv")
-#
-# pynusmv.glob.compute_model()
+pynusmv.glob.load_from_file("/Users/tomyaacov/repos/BPpyModelChecker/output/bp_model.smv")
 
-
-pynusmv.glob.load(bt_list[0], bt_list[1], bt_list[2], main)
 pynusmv.glob.compute_model()
+
+
+# pynusmv.glob.load(bt_list[0], bt_list[1], bt_list[2], main)
+# pynusmv.glob.compute_model()
 fsm = pynusmv.glob.prop_database().master.bddFsm
 
 def get_id(state):
-    return {k:v for k,v in state.get_str_values().items() if k in ["bt0.state", "bt1.state", "bt2.state", "bt0.must_finish"]}
+    return {k:v for k,v in state.get_str_values().items() if k.endswith("state") or k.endswith("must_finish") or k.endswith("DEADLOCK")}
 
 l = {}
 def dfs(s):
@@ -55,7 +55,7 @@ def save_graph(states, name):
     _states = {str(v[0]): k for k,v in states.items()}
     g = graphviz.Digraph()
     for s in states:
-        g.node(str(s), shape='doublecircle' if s == 0 else 'circle', color="red" if states[s][0]['bt0.must_finish'] == "TRUE" else "green")
+        g.node(str(s), shape='doublecircle' if s == 0 else 'circle', color="red" if states[s][0].get('DEADLOCK', "FALSE") == "TRUE" else "green")
     for s, v in states.items():
         for e, s_new in v[1].items():
             g.edge(str(s), str(_states[str(s_new)]), label=e)

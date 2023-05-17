@@ -15,7 +15,8 @@ def main(args):
         mc = ModelChecker(["Start", "HOT"] + ["COLD" + str(i) for i in range(M)],
                           [lambda: add_a()] + list(map((lambda n: lambda: add_b("COLD" + str(n))), range(M))) + [lambda: control()],
                           ["adda"] + ["addb"+str(i) for i in range(M)] + ["control"])
-        spec = "AG (AF must_finish = FALSE)"
+        spec = "G (F must_finish = FALSE)"
+        bmc_length = N+5
     elif example == "hot_cold2":
         N = int(args[1])
         M = int(args[2])
@@ -23,7 +24,8 @@ def main(args):
         mc = ModelChecker(["Start", "HOT"] + ["COLD" + str(i) for i in range(M)],
                           [lambda: add_a()] + list(map((lambda n: lambda: add_b("COLD" + str(n))), range(M))) + [lambda: control2()],
                           ["adda"] + ["addb"+str(i) for i in range(M)] + ["control"])
-        spec = "AG (AF must_finish = FALSE)"
+        spec = "G (F must_finish = FALSE)"
+        bmc_length = N + 5
     elif example == "dining_philosophers1":
         N = int(args[1])
         set_dp_bprogram(int(args[1]))
@@ -39,7 +41,8 @@ def main(args):
                           ["f" + str(i) for i in range(N)] +
                           ["f0r"]
                           )
-        spec = "AG (!(event = DONE))"
+        spec = "G (!(event = DONE))"
+        bmc_length = 10
     elif example == "dining_philosophers2":
         N = int(args[1])
         set_dp_bprogram(int(args[1]))
@@ -60,7 +63,8 @@ def main(args):
                           ["f0r"] +
                           ["s"] +
                           ["ts" + str(i) for i in range(N)])
-        spec = "AG (!(event = DONE))"
+        spec = "G (!(event = DONE))"
+        bmc_length = 10
     elif example == "ttt1":
         R = int(args[1])
         C = int(args[2])
@@ -83,7 +87,8 @@ def main(args):
                             ["xwin" + str(i) for i in range(len(x_lines))] +
                             ["owin" + str(i) for i in range(len(o_lines))]
                             )
-        spec = "AG (!(event = DONE))"
+        spec = "G (!(event = DONE))"
+        bmc_length = R*C + 5
     elif example == "ttt2":
         R = int(args[1])
         C = int(args[2])
@@ -106,12 +111,13 @@ def main(args):
                             ["xwin" + str(i) for i in range(len(x_lines))] +
                             ["owin" + str(i) for i in range(len(o_lines))]
                             )
-        spec = "AG (!(event = DONE))"
+        spec = "G (!(event = DONE))"
+        bmc_length = R*C + 5
 
 
     # spec = prop.ag(prop.af(prop.atom(("bt0.must_finish = FALSE"))))
     print("number of events:", len(mc.event_list))
-    result, explanation = mc.check(spec, debug=True, find_counterexample=False)
+    result, explanation = mc.check(spec, debug=True, find_counterexample=False, bmc=True, bmc_length=bmc_length)
     print(result)
     if not result and explanation is not None:
         print("violation event trace:")
@@ -120,9 +126,9 @@ def main(args):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        #main("dining_philosophers1 4".split())
-        #main("hot_cold2 3 1".split())
-        main("ttt1 3 3".split())
+        #main("dining_philosophers2 4".split())
+        main("hot_cold1 3 1".split())
+        #main("ttt1 3 3".split())
     else:
         main(sys.argv[1:])
         # for i in [10, 20, 30]:
