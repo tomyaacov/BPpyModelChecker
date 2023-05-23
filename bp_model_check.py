@@ -3,7 +3,7 @@ from hot_cold_scripts.hot_cold_original import *
 import sys
 import pynusmv
 from pynusmv import prop
-from pynusmv.mc import check_ctl_spec
+from pynusmv.mc import check_ltl_spec, check_explain_ltl_spec
 from pynusmv.bmc.glob import bmc_setup, BmcSupport, master_be_fsm
 from pynusmv.parser import parse_ltl_spec
 from pynusmv.node import Node
@@ -100,8 +100,8 @@ class ModelChecker:
 
             if debug:
                 print("Checking LTL spec")
-            fsm = pynusmv.glob.prop_database().master.bddFsm
-            result = check_ctl_spec(fsm, spec)
+            #fsm = pynusmv.glob.prop_database().master.bddFsm
+            result = check_ltl_spec(spec)
             if debug:
                 print("Done in", time.time() - ts, "seconds")
                 print("Memory usage (bytes):", tracemalloc.get_traced_memory()[1])
@@ -110,16 +110,21 @@ class ModelChecker:
                 from pynusmv.mc import explain, eval_ctl_spec
                 if debug:
                     print("Finding counterexample")
-                explanation = explain(fsm, fsm.init & ~eval_ctl_spec(fsm, spec), spec)
-                skip_last = False
+                _, explanation = check_explain_ltl_spec(spec)
                 explanation_str = ""
-                for state in explanation[2::2]:
-                    if state == explanation[-1]:
-                        if skip_last:
-                            break
-                        skip_last = True
+                for state in explanation[2:-1:2]:
+                    if state == explanation[2::2][-1]:
                         explanation_str += "-- Loop starts here" + "\n"
-                    explanation_str += state.get_str_values()["event"] + "\n"
+                    explanation_str += state["event"] + "\n"
+                # skip_last = False
+                # explanation_str = ""
+                # for state in explanation[2::2]:
+                #     if state == explanation[-1]:
+                #         if skip_last:
+                #             break
+                #         skip_last = True
+                #         explanation_str += "-- Loop starts here" + "\n"
+                #     explanation_str += state.get_str_values()["event"] + "\n"
                 # for state in explanation[::2]:
                 #     if state == explanation[-1]:
                 #         print("-- Loop starts here")

@@ -12,7 +12,7 @@ def main(args):
         N = int(args[1])
         M = int(args[2])
         set_bprogram(N, M)
-        mc = ModelChecker(["Start", "HOT"] + ["COLD" + str(i) for i in range(M)],
+        mc = ModelChecker(["HOT"] + ["COLD" + str(i) for i in range(M)],
                           [lambda: add_a()] + list(map((lambda n: lambda: add_b("COLD" + str(n))), range(M))) + [lambda: control()],
                           ["adda"] + ["addb"+str(i) for i in range(M)] + ["control"])
         spec = "G (F must_finish = FALSE)"
@@ -21,7 +21,7 @@ def main(args):
         N = int(args[1])
         M = int(args[2])
         set_bprogram(N, M)
-        mc = ModelChecker(["Start", "HOT"] + ["COLD" + str(i) for i in range(M)],
+        mc = ModelChecker(["HOT"] + ["COLD" + str(i) for i in range(M)],
                           [lambda: add_a()] + list(map((lambda n: lambda: add_b("COLD" + str(n))), range(M))) + [lambda: control2()],
                           ["adda"] + ["addb"+str(i) for i in range(M)] + ["control"])
         spec = "G (F must_finish = FALSE)"
@@ -117,7 +117,8 @@ def main(args):
 
     # spec = prop.ag(prop.af(prop.atom(("bt0.must_finish = FALSE"))))
     print("number of events:", len(mc.event_list))
-    result, explanation = mc.check(spec, debug=True, find_counterexample=False, bmc=True, bmc_length=bmc_length)
+    bmc_flag = args[-1] == "1"
+    result, explanation = mc.check(spec, debug=True, find_counterexample=False, bmc=bmc_flag, bmc_length=bmc_length)
     print(result)
     if not result and explanation is not None:
         print("violation event trace:")
@@ -126,9 +127,9 @@ def main(args):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        #main("dining_philosophers2 4".split())
-        main("hot_cold1 3 1".split())
-        #main("ttt1 3 3".split())
+        main("dining_philosophers1 2 0 1".split())
+        #main("hot_cold2 3 1 0".split())
+        #main("ttt1 3 3 1".split())
     else:
         main(sys.argv[1:])
         # for i in [10, 20, 30]:

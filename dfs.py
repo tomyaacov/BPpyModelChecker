@@ -161,32 +161,32 @@ class DFSBProgram:
 
 
 if __name__ == "__main__":
-    from examples.dining_philosophers import *
-    N = 3
-    set_dp_bprogram(3)
-    all_events = [BEvent(f"T{i}R") for i in range(N)] + \
-                 [BEvent(f"T{i}L") for i in range(N)] + \
-                 [BEvent(f"P{i}R") for i in range(N)] + \
-                 [BEvent(f"P{i}L") for i in range(N)] + \
-                 [BEvent(f"TS{i}") for i in range(N)] + \
-                 [BEvent(f"RS{i}") for i in range(N)]
-    dfs = DFSBProgram(list(map((lambda n: lambda: philosopher(n)), range(N))) +
-                      list(map((lambda n: lambda: fork(n)), range(N))) +
-                      [lambda: fork_eventually_released(0)], #+
-                      # [lambda: semaphore()] +
-                      # list(map((lambda n: lambda: take_semaphore(n)), range(N))),
-                      SimpleEventSelectionStrategy(),
-                      [x.name for x in all_events])
-    init_s, visited = dfs.run()
-    DFSBProgram.save_graph(init_s, visited, "output/dfs.dot")
-    # from examples.hot_cold import *
-    # N = 2
-    # M = 2
-    # set_bprogram(N, M)
-    # event_list = ["Start", "HOT", "IDLE"] + ["COLD" + str(i) for i in range(M)]
-    # dfs = DFSBProgram([lambda: add_a(), lambda: add_b("COLD0"), lambda: add_b("COLD1"), lambda: control2()],
+    # from examples.dining_philosophers import *
+    # N = 3
+    # set_dp_bprogram(3)
+    # all_events = [BEvent(f"T{i}R") for i in range(N)] + \
+    #              [BEvent(f"T{i}L") for i in range(N)] + \
+    #              [BEvent(f"P{i}R") for i in range(N)] + \
+    #              [BEvent(f"P{i}L") for i in range(N)] + \
+    #              [BEvent(f"TS{i}") for i in range(N)] + \
+    #              [BEvent(f"RS{i}") for i in range(N)]
+    # dfs = DFSBProgram(list(map((lambda n: lambda: philosopher(n)), range(N))) +
+    #                   list(map((lambda n: lambda: fork(n)), range(N))) +
+    #                   [lambda: fork_eventually_released(0)], #+
+    #                   # [lambda: semaphore()] +
+    #                   # list(map((lambda n: lambda: take_semaphore(n)), range(N))),
     #                   SimpleEventSelectionStrategy(),
-    #                   event_list)
+    #                   [x.name for x in all_events])
     # init_s, visited = dfs.run()
     # DFSBProgram.save_graph(init_s, visited, "output/dfs.dot")
+    from examples.hot_cold import *
+    N = 3
+    M = 1
+    set_bprogram(N, M)
+    event_list = ["HOT"] + ["COLD" + str(i) for i in range(M)]
+    dfs = DFSBProgram([lambda: add_a(), lambda: add_b("COLD0"), lambda: control2()],
+                      SimpleEventSelectionStrategy(),
+                      event_list)
+    init_s, visited = dfs.run()
+    DFSBProgram.save_graph(init_s, visited, "output/dfs.dot")
 
