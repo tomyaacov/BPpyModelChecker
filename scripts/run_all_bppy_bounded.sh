@@ -14,20 +14,18 @@
 module load anaconda ### load anaconda module
 source activate bppy_model_checking ### activating Conda environment. Environment must be configured before running the job
 cd ~/repos/BPpyModelChecker/ || exit
-ulimit -s
 ulimit -s unlimited
-ulimit -s
-options=("hot_cold2 30 1 1" "hot_cold2 60 1 1" "hot_cold2 90 1 1")
-#options=(
-#
-#"hot_cold2 30 1 1" "hot_cold2 60 1 1" "hot_cold2 90 1 1"
-#"hot_cold2 30 2 1" "hot_cold2 60 2 1" "hot_cold2 90 2 1"
-#"hot_cold2 30 3 1" "hot_cold2 60 3 1" "hot_cold2 90 3 1"
-#
-#"dining_philosophers2 3 1" "dining_philosophers2 6 1" "dining_philosophers2 9 1" "dining_philosophers2 12 1" "dining_philosophers2 15 1"
-#
-#"ttt2 2 2 1" "ttt2 3 3 1" "ttt2 4 4 1" "ttt2 5 5 1"
-#)
+#options = ()
+options=(
+
+"hot_cold2 30 1 1" "hot_cold2 60 1 1" "hot_cold2 90 1 1"
+"hot_cold2 30 2 1" "hot_cold2 60 2 1" "hot_cold2 90 2 1"
+"hot_cold2 30 3 1" "hot_cold2 60 3 1" "hot_cold2 90 3 1"
+
+"dining_philosophers2 3 1" "dining_philosophers2 6 1" "dining_philosophers2 9 1" "dining_philosophers2 12 1" "dining_philosophers2 15 1"
+
+"ttt2 2 2 1" "ttt2 3 3 1" "ttt2 4 4 1" "ttt2 5 5 1"
+)
 echo "option,time,memory" > run_all_bppy_bounded_output.csv
 for option in "${options[@]}"; do
   echo "$option"

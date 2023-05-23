@@ -87,7 +87,7 @@ def main(args):
                             ["xwin" + str(i) for i in range(len(x_lines))] +
                             ["owin" + str(i) for i in range(len(o_lines))]
                             )
-        spec = "G (!(event = DONE))"
+        spec = "F ((event = OWin) | (event = XWin) | (event = Draw))"
         bmc_length = R*C + 5
     elif example == "ttt2":
         R = int(args[1])
@@ -111,7 +111,7 @@ def main(args):
                             ["xwin" + str(i) for i in range(len(x_lines))] +
                             ["owin" + str(i) for i in range(len(o_lines))]
                             )
-        spec = "G (!(event = DONE))"
+        spec = "F ((event = OWin) | (event = XWin) | (event = Draw))"
         bmc_length = R*C + 5
 
 
@@ -127,9 +127,9 @@ def main(args):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        main("dining_philosophers1 2 0 1".split())
+        #main("dining_philosophers1 2 0 1".split())
         #main("hot_cold2 3 1 0".split())
-        #main("ttt1 3 3 1".split())
+        main("ttt2 2 2 0".split())
     else:
         main(sys.argv[1:])
         # for i in [10, 20, 30]:
