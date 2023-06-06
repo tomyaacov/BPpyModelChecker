@@ -33,7 +33,7 @@ for option in "${options[@]}"; do
   EXIT_STATUS=$?
   if [ $EXIT_STATUS -eq 124 ]
   then
-  echo "$option,t.o." >> run_all_bppy_unbounded_output.csv
+  echo "$option,t.o.,-" >> run_all_bppy_unbounded_output.csv
   else
   if [ $EXIT_STATUS -ne 0 ]
   then
