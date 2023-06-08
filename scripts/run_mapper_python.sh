@@ -18,16 +18,12 @@ ulimit -s unlimited
 #options = ()
 options=(
 
-"hot_cold 30 1" "hot_cold 60 1" "hot_cold 90 1"
-"hot_cold 30 2" "hot_cold 60 2" "hot_cold 90 2"
-"hot_cold 30 3" "hot_cold 60 3" "hot_cold 90 3"
+"dining_philosophers 12" "dining_philosophers 15"
 
-"dining_philosophers 3" "dining_philosophers 6" "dining_philosophers 9" "dining_philosophers 12" "dining_philosophers 15"
-
-"ttt 2 2" "ttt 3 3" "ttt 4 4"
+"ttt 4 4"
 )
 
 for option in "${options[@]}"; do
   echo "$option"
-  timeout 600m python run_mapper.py $option
+  timeout 1200m python run_mapper.py $option
 done
