@@ -25,5 +25,5 @@ options=(
 
 for option in "${options[@]}"; do
   echo "$option"
-  timeout 1200m python run_mapper.py $option
+  timeout 3000m python run_mapper.py $option
 done
