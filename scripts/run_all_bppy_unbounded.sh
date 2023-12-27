@@ -29,7 +29,7 @@ options=(
 echo "option,run,time,memory" > run_all_bppy_unbounded_output.csv
 for option in "${options[@]}"; do
   echo "$option"
-  for i in {1..5}
+  for i in {1..10}
   do
     timeout 30m /usr/bin/time -a -o run_all_bppy_unbounded_output.csv -f "$option,$i,%E,%M" python main.py $option
     EXIT_STATUS=$?

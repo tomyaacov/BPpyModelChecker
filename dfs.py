@@ -180,35 +180,35 @@ if __name__ == "__main__":
     #                   [x.name for x in all_events])
     # init_s, visited = dfs.run()
     # DFSBProgram.save_graph(init_s, visited, "output/dfs.dot")
-    # from examples.hot_cold import *
-    # N = 3
-    # M = 1
-    # set_bprogram(N, M)
-    # event_list = ["HOT"] + ["COLD" + str(i) for i in range(M)]
-    # dfs = DFSBProgram([lambda: add_a(), lambda: add_b("COLD0"), lambda: control2()],
-    #                   SimpleEventSelectionStrategy(),
-    #                   event_list)
-    # init_s, visited = dfs.run()
-    # DFSBProgram.save_graph(init_s, visited, "output/dfs.dot")
-    from examples.ttt import *
-    R=2
-    C=2
-    set_ttt_bprogram(R, C)
-    any_x = [x(i, j) for i in range(R) for j in range(C)]
-    any_o = [o(i, j) for i in range(R) for j in range(C)]
-    move_events = any_x + any_o
-    all_events = move_events + [BEvent('OWin'), BEvent('XWin'), BEvent('Draw')]
-    LINES = [[(i, j) for j in range(C)] for i in range(R)] + [[(i, j) for i in range(R)] for j in range(C)] + [
-        [(i, i) for i in range(R)]] + [[(i, R - i - 1) for i in range(R)]]
-    x_lines = [[x(i, j) for (i, j) in line] for line in LINES]
-    o_lines = [[o(i, j) for (i, j) in line] for line in LINES]
-    dfs = DFSBProgram(list(map((lambda arg: lambda: square_taken(*arg)), product(range(R), range(C)))) +
-                          [lambda: enforce_turns(), lambda: end_of_game(), lambda: detect_draw(), lambda: player_o(), lambda: player_x()] +
-                          list(map((lambda line: lambda: detect_x_win(line)), x_lines)) +
-                          list(map((lambda line: lambda: detect_x_win(line)), o_lines)),
+    from examples.hot_cold import *
+    N = 3
+    M = 1
+    set_bprogram(N, M)
+    event_list = ["HOT"] + ["COLD" + str(i) for i in range(M)]
+    dfs = DFSBProgram([lambda: add_a(), lambda: add_b("COLD0"), lambda: control()],
                       SimpleEventSelectionStrategy(),
-                      [x.name for x in all_events])
+                      event_list)
     init_s, visited = dfs.run()
     DFSBProgram.save_graph(init_s, visited, "output/dfs.dot")
+    # from examples.ttt import *
+    # R=2
+    # C=2
+    # set_ttt_bprogram(R, C)
+    # any_x = [x(i, j) for i in range(R) for j in range(C)]
+    # any_o = [o(i, j) for i in range(R) for j in range(C)]
+    # move_events = any_x + any_o
+    # all_events = move_events + [BEvent('OWin'), BEvent('XWin'), BEvent('Draw')]
+    # LINES = [[(i, j) for j in range(C)] for i in range(R)] + [[(i, j) for i in range(R)] for j in range(C)] + [
+    #     [(i, i) for i in range(R)]] + [[(i, R - i - 1) for i in range(R)]]
+    # x_lines = [[x(i, j) for (i, j) in line] for line in LINES]
+    # o_lines = [[o(i, j) for (i, j) in line] for line in LINES]
+    # dfs = DFSBProgram(list(map((lambda arg: lambda: square_taken(*arg)), product(range(R), range(C)))) +
+    #                       [lambda: enforce_turns(), lambda: end_of_game(), lambda: detect_draw(), lambda: player_o(), lambda: player_x()] +
+    #                       list(map((lambda line: lambda: detect_x_win(line)), x_lines)) +
+    #                       list(map((lambda line: lambda: detect_x_win(line)), o_lines)),
+    #                   SimpleEventSelectionStrategy(),
+    #                   [x.name for x in all_events])
+    # init_s, visited = dfs.run()
+    # DFSBProgram.save_graph(init_s, visited, "output/dfs.dot")
 
 
